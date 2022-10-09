@@ -1,0 +1,20 @@
+STAT(2)                                  Linux Programmer's Manual                                  STAT(2)
+
+NAME
+       stat, fstat, lstat, fstatat - get file status
+
+SYNOPSIS
+       #include <sys/types.h>
+       #include <sys/stat.h>
+       #include <unistd.h>
+
+       int stat(const char *pathname, struct stat *statbuf);
+       int fstat(int fd, struct stat *statbuf);
+       int lstat(const char *pathname, struct stat *statbuf);
+
+       #include <fcntl.h>           /* Definition of AT_* constants */
+       #include <sys/stat.h>
+
+       int fstatat(int dirfd, const char *pathname, struct stat *statbuf,
+                   int flags);
+

@@ -1,0 +1,1 @@
+CMakeLists.txt not found in /home/boris/OS2/lab1 Select CMakeLists.txt

@@ -1,0 +1,10 @@
+NODE(7)                                 Linux Programmer's Manual                                 INODE(7)
+
+NAME
+       inode - file inode information
+
+DESCRIPTION
+       Each  file  has an inode containing metadata about the file.  An application can retrieve this meta‐
+       data using stat(2) (or related calls), which returns a stat structure, or statx(2), which returns  a
+       statx structure.
+
