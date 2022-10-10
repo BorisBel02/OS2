@@ -13,9 +13,9 @@
 #include <string.h>
 #include <asm-generic/errno.h>
 
-#define PHILO 5
+#define PHILO 50
 #define DELAY 30000
-#define FOOD 50
+#define FOOD 500
 
 pthread_mutex_t forks[PHILO];
 pthread_t phils[PHILO];

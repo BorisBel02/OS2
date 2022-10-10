@@ -18,7 +18,10 @@ typedef struct pendingData{
 char err_msg[256];
 int err;
 
-int write_msg(struct pollfd* pollfd_in, struct pollfd* pollfd_out, struct pendingData* pending_data, char* msg, ssize_t msg_size, char* shutdown){
+struct sockaddr_in server_address;
+char client_msg[BUFSIZ], compress = 0, shutdown_server = 0;
+
+int write_msg(struct pollfd* pollfd_in, struct pollfd* pollfd_out, struct pendingData* pending_data, char* msg, ssize_t msg_size){
     if(pending_data->size > 0){
         if(write(pollfd_out->fd, pending_data->data, pending_data->size) == -1){
             strerror_r(errno, err_msg, 255);
@@ -27,12 +30,12 @@ int write_msg(struct pollfd* pollfd_in, struct pollfd* pollfd_out, struct pendin
             if(close(pollfd_out->fd) == -1){
                 strerror_r(errno, err_msg, 255);
                 printf("close failed: %s\n", err_msg);
-                *shutdown = 1;
+                shutdown_server = 1;
             }
             if(close(pollfd_in->fd) == -1){
                 strerror_r(errno, err_msg, 255);
                 printf("close failed: %s\n", err_msg);
-                *shutdown = 1;
+                shutdown_server = 1;
             }
             pollfd_out->fd = -1;
             pollfd_in->fd = -1;
@@ -50,19 +53,167 @@ int write_msg(struct pollfd* pollfd_in, struct pollfd* pollfd_out, struct pendin
             if (close(pollfd_out->fd) == -1) {
                 strerror_r(errno, err_msg, 255);
                 printf("close failed: %s\n", err_msg);
-                *shutdown = 1;
+                shutdown_server = 1;
             }
             if (close(pollfd_in->fd) == -1) {
                 strerror_r(errno, err_msg, 255);
                 printf("close failed: %s\n", err_msg);
-                *shutdown = 1;
+                shutdown_server = 1;
             }
             return -1;
         }
     }
     return 0;
 }
+int accept_new_connections(int listen_sfd, struct pollfd* fds_in, nfds_t* nfds_in, struct pollfd* fds_out, nfds_t* nfds_out){
+    printf("starting accepting connections\n");
+    if(*nfds_in < 511){//
+        //printf("accepting\n");
+        int new_sfd = accept(listen_sfd, NULL, NULL);
+        if(new_sfd == -1){
+            strerror_r(errno, err_msg, 255);
+            printf("accept failed: %s\n", err_msg);
+            return -1;
+        }
+        fds_in[*nfds_in].fd = new_sfd;
+        fds_in[*nfds_in].events = POLLIN | POLLOUT;
 
+        int new_connection_sfd;
+        if((new_connection_sfd = socket(AF_INET, SOCK_STREAM, 0)) == -1){
+            strerror_r(errno, err_msg, 255);
+            printf("creating server socket failed: %s\n", err_msg);
+            if(close(new_sfd) == -1){
+                strerror_r(errno, err_msg, 255);
+                printf("close failed: %s\n", err_msg);
+                shutdown_server = 1;
+                return -1;
+            }
+            fds_in[*nfds_in].fd = -1;
+            return -1;
+        }
+        if(connect(new_connection_sfd, (struct sockaddr*)&server_address, sizeof(server_address)) == -1){
+            strerror_r(errno, err_msg, 255);
+            printf("connection failed failed: %s\n", err_msg);
+            if(close(new_sfd) == -1){
+                strerror_r(errno, err_msg, 255);
+                printf("close failed: %s\n", err_msg);
+                shutdown_server = 1;
+                return -1;
+            }
+            if(close(new_connection_sfd) == -1){
+                strerror_r(errno, err_msg, 255);
+                printf("close failed: %s\n", err_msg);
+                shutdown_server = 1;
+                return -1;
+            }                    }
+        fds_out[*nfds_in].fd = new_connection_sfd;
+        fds_out[*nfds_in].events = POLLIN | POLLOUT;
+        printf("New connection! Client socket = %d, server socket = %d\n", fds_in[*nfds_in].fd, fds_out[*nfds_in].fd);
+        ++*nfds_in;
+        ++*nfds_out;
+    }
+    else {
+        int sfd;
+        sfd = accept(listen_sfd, NULL, NULL);
+        if (close(sfd) == -1) {
+            strerror_r(errno, err_msg, 255);
+            printf("close failed: %s\n", err_msg);
+            shutdown_server = 1;
+            return -1;
+        }
+    }
+    return 0;
+}
+
+void handle_connections(struct pollfd* fds_in, nfds_t* nfds_in, struct pollfd* fds_out, nfds_t* nfds_out, struct pendingData* pending_messages){
+    for(int i = 0; i < *nfds_in; ++i){
+        if(fds_in[i].revents == 0){
+            continue;
+        }
+
+        if(fds_in[i].revents != POLLIN && fds_in[i].revents != POLLOUT && fds_in[i].revents != (POLLIN | POLLOUT)){
+            printf("Error on socket: %d. revents = %d. Closing connection.\n", fds_in[i].fd, fds_in[i].revents);
+            if(close(fds_in[i].fd) == -1){
+                strerror_r(errno, err_msg, 255);
+                printf("close failed: %s\n", err_msg);
+                shutdown_server = 1;
+                return;
+            }
+            if(close(fds_out[i].fd) == -1){
+                strerror_r(errno, err_msg, 255);
+                printf("close failed: %s\n", err_msg);
+                shutdown_server = 1;
+                return;
+            }
+            --*nfds_in;
+
+            --*nfds_out;
+
+            compress = 1;
+        }
+
+        ssize_t msg_size = 0;
+        if(fds_in[i].revents & POLLIN) {
+            //printf("reading\n");
+            if ((msg_size = read(fds_in[i].fd, client_msg, BUFSIZ)) == -1) {
+                strerror_r(errno, err_msg, 255);
+                printf("read failed: %s\n", err_msg);
+                return;
+            }
+            if (msg_size == 0) {
+                if (write_msg(&fds_in[i], &fds_out[i], &pending_messages[i], client_msg, msg_size) == -1) {
+                    if (shutdown_server) {
+                        return;
+                    }
+                    compress = 1;
+                    --*nfds_in;
+                    --*nfds_out;
+                    continue;
+                }
+                printf("Connection closed.\n");
+                if (close(fds_in[i].fd) == -1) {
+                    strerror_r(errno, err_msg, 255);
+                    printf("close failed: %s\n", err_msg);
+                    shutdown_server = 1;
+                    return;
+                }
+                if (close(fds_out[i].fd) == -1) {
+                    strerror_r(errno, err_msg, 255);
+                    printf("close failed: %s\n", err_msg);
+                    shutdown_server = 1;
+                    return;
+                }
+                fds_in[i].fd = -1;
+                --*nfds_in;
+
+                fds_out[i].fd = -1;
+                --*nfds_out;
+
+                compress = 1;
+                continue;
+            }
+            printf("Get msg: %s\n", client_msg);
+        }
+        if(fds_out[i].revents & POLLOUT) {
+            //printf("writing\n");
+            if (write_msg(&fds_in[i], &fds_out[i], &pending_messages[i], client_msg, msg_size) == -1) {
+                if (shutdown_server) {
+                    return;
+                }
+                compress = 1;
+                --*nfds_in;
+                --*nfds_out;
+            }
+        }
+        else if(msg_size > 0){
+            pending_messages[i].data = (char*)realloc(pending_messages[i].data, (pending_messages[i].size + msg_size)*sizeof(char));
+            //using realloc may be unsafe
+            strcpy(&pending_messages[i].data[pending_messages[i].size], client_msg);
+            pending_messages[i].size += msg_size;
+        }
+
+    }
+}
 int main(int argc, char* argv[]) {
     if(argc != 4){
         printf("wrong argument quantity\n");
@@ -95,7 +246,6 @@ int main(int argc, char* argv[]) {
         exit(errno);
     }
 
-    struct sockaddr_in server_address;
     if((err = inet_pton(AF_INET, argv[2], &(server_address.sin_addr))) != 1){
         if(err == 0){
             printf("second argument does not representing an ipv4 address\n");
@@ -110,13 +260,14 @@ int main(int argc, char* argv[]) {
     server_address.sin_port = htons(trans_port);
     server_address.sin_family = AF_INET;
 
-    char client_msg[BUFSIZ], compress = 0, shutdown = 0;
 
-    nfds_t nfds_in = 1, nfds_out = 0, new_nfds_in, new_nfds_out;
-    struct pollfd fds_in[511], fds_out[510];
+    nfds_t nfds_in = 0, nfds_out = 0;
+    struct pollfd all_fds[1021];
+    struct pollfd* fds_in = &all_fds[1];
+    struct pollfd* fds_out = &all_fds[511];
 
-    fds_in[0].fd = listen_sfd;
-    fds_in[0].events = POLLIN;
+    all_fds[0].fd = listen_sfd;
+    all_fds[0].events = POLLIN;
     int timeout = 60 * 1000;
 
     struct pendingData pending_messages_to_server[510], pending_messages_to_client[510];
@@ -128,14 +279,14 @@ int main(int argc, char* argv[]) {
     }
 
     for(;;){
-        err = poll(fds_in, nfds_in, timeout);
+        err = poll(all_fds, nfds_in + 1, timeout);
         if(err == -1){
             strerror_r(errno, err_msg, 255);
             printf("poll failed: %s\n", err_msg);
             break;
         }
         if(err == 0){
-            printf("poll timed out. Shutdown.\n");
+            printf("poll timed out. shutdown_server.\n");
             for (int i = 0; i < nfds_in; ++i) {
                 if(close(fds_in[i].fd) == -1){
                     strerror_r(errno, err_msg, 255);
@@ -144,277 +295,45 @@ int main(int argc, char* argv[]) {
             }
             break;
         }
-
         if(nfds_out > 0) {
             err = poll(fds_out, nfds_out, timeout);
-
-            if (err == -1) {
-                strerror_r(errno, err_msg, 255);
-                printf("poll failed: %s\n", err_msg);
-                break;
-            }
-            if (err == 0) {
-                printf("poll timed out. Shutdown.\n");
-                for (int i = 0; i < nfds_in; ++i) {
-                    if (close(fds_in[i].fd) == -1) {
-                        strerror_r(errno, err_msg, 255);
-                        printf("closing socket: %d failed. Error: %s", fds_in[i].fd, err_msg);
-                    }
-                }
-                break;
-            }
         }
-        new_nfds_in = 0;
-        new_nfds_out = 0;
+        if (err == -1) {
+            strerror_r(errno, err_msg, 255);
+            printf("poll failed: %s\n", err_msg);
+            break;
+        }
+        if (err == 0) {
+            printf("poll timed out. shutdown_server.\n");
+            for (int i = 0; i < nfds_in; ++i) {
+                if (close(fds_in[i].fd) == -1) {
+                    strerror_r(errno, err_msg, 255);
+                    printf("closing socket: %d failed. Error: %s", fds_in[i].fd, err_msg);
+                }
+            }
+            break;
+        }
+
         //handling clients connections
-        for(int i = 0; i < nfds_in; ++i){
-            if(fds_in[i].revents == 0){
-                continue;
-            }
-
-            if(fds_in[i].revents != POLLIN && fds_in[i].revents != POLLOUT && fds_in[i].revents != (POLLIN | POLLOUT)){
-                if(fds_in[i].fd == listen_sfd){
-                    printf("Error on listening socket. revents = %d. Shutdown.", fds_in[i].revents);
-                    shutdown = 1;
-                    break;
-                }
-                printf("Error on socket: %d. revents = %d. Closing connection.\n", fds_in[i].fd, fds_in[i].revents);
-                if(close(fds_in[i].fd) == -1){
-                    strerror_r(errno, err_msg, 255);
-                    printf("close failed: %s\n", err_msg);
-                    shutdown = 1;
-                    break;
-                }
-                if(close(fds_out[i].fd) == -1){
-                    strerror_r(errno, err_msg, 255);
-                    printf("close failed: %s\n", err_msg);
-                    shutdown = 1;
-                    break;
-                }
-                --nfds_in;
-
-                --nfds_out;
-
-                compress = 1;
-            }
-            
-            if(fds_in[i].fd == listen_sfd){
-                //printf("starting accepting connections\n");
-                if(nfds_in < 511){//
-                    //printf("accepting\n");
-                    int new_sfd = accept(listen_sfd, NULL, NULL);
-                    if(new_sfd == -1){
-                        strerror_r(errno, err_msg, 255);
-                        printf("accept failed: %s\n", err_msg);
-                        break;
-                    }
-                    fds_in[nfds_in].fd = new_sfd;
-                    fds_in[nfds_in].events = POLLIN | POLLOUT;
-
-                    int new_connection_sfd;
-                    if((new_connection_sfd = socket(AF_INET, SOCK_STREAM, 0)) == -1){
-                        strerror_r(errno, err_msg, 255);
-                        printf("creating server socket failed: %s\n", err_msg);
-                        if(close(new_sfd) == -1){
-                            strerror_r(errno, err_msg, 255);
-                            printf("close failed: %s\n", err_msg);
-                            shutdown = 1;
-                            break;
-                        }
-                        fds_in[nfds_in].fd = -1;
-                        break;
-                    }
-                    if(connect(new_connection_sfd, (struct sockaddr*)&server_address, sizeof(server_address)) == -1){
-                        strerror_r(errno, err_msg, 255);
-                        printf("connection failed failed: %s\n", err_msg);
-                        if(close(new_sfd) == -1){
-                            strerror_r(errno, err_msg, 255);
-                            printf("close failed: %s\n", err_msg);
-                            shutdown = 1;
-                            break;
-                        }
-                        if(close(new_connection_sfd) == -1){
-                            strerror_r(errno, err_msg, 255);
-                            printf("close failed: %s\n", err_msg);
-                            shutdown = 1;
-                            break;
-                        }                    }
-                    fds_out[nfds_in - 1].fd = new_connection_sfd;
-                    fds_out[nfds_in - 1].events = POLLIN | POLLOUT;
-                    printf("New connection! Client socket = %d, server socket = %d\n", fds_in[nfds_in].fd, fds_out[nfds_in-1].fd);
-                    ++new_nfds_out;
-                    ++new_nfds_in;
-                }
-                else {
-                    int sfd;
-                    sfd = accept(listen_sfd, NULL, NULL);
-                    if (close(sfd) == -1) {
-                        strerror_r(errno, err_msg, 255);
-                        printf("close failed: %s\n", err_msg);
-                        shutdown = 1;
-                        break;
-                    }
-                }
-            }
-            else{
-                ssize_t msg_size = 0;
-                if(fds_in[i].revents & POLLIN) {
-                    //printf("reading\n");
-                    if ((msg_size = read(fds_in[i].fd, client_msg, BUFSIZ)) == -1) {
-                        strerror_r(errno, err_msg, 255);
-                        printf("read failed: %s\n", err_msg);
-                        break;
-                    }
-                    if (msg_size == 0) {
-                        //what to do if client closed connection and server doesn't ready to get data? hm???
-                        if (write_msg(&fds_in[i], &fds_out[i - 1], &pending_messages_to_server[i - 1], client_msg, msg_size, &shutdown) == -1) {
-                            if (shutdown) {
-                                break;
-                            }
-                            compress = 1;
-                            --nfds_in;
-                            --nfds_out;
-                            continue;
-                        }
-                        printf("Connection closed.\n");
-                        if (close(fds_in[i].fd) == -1) {
-                            strerror_r(errno, err_msg, 255);
-                            printf("close failed: %s\n", err_msg);
-                            shutdown = 1;
-                            break;
-                        }
-                        if (close(fds_out[i - 1].fd) == -1) {
-                            strerror_r(errno, err_msg, 255);
-                            printf("close failed: %s\n", err_msg);
-                            shutdown = 1;
-                            break;
-                        }
-                        fds_in[i].fd = -1;
-                        --nfds_in;
-
-                        fds_out[i - 1].fd = -1;
-                        --nfds_out;
-
-                        compress = 1;
-                        continue;
-                    }
-                }
-                 //printf("Get msg: %s\n", client_msg);
-                 if(fds_out[i-1].revents & POLLOUT) {
-                     //printf("writing\n");
-                     if (write_msg(&fds_in[i], &fds_out[i - 1], &pending_messages_to_server[i - 1], client_msg, msg_size, &shutdown) == -1) {
-                         if (shutdown) {
-                             break;
-                         }
-                         compress = 1;
-                         --nfds_in;
-                         --nfds_out;
-                     }
-                 }
-                 else{
-                     pending_messages_to_server[i-1].data = (char*)realloc(pending_messages_to_server[i].data, (pending_messages_to_server[i].size + msg_size)*sizeof(char));
-                     //using realloc may be unsafe
-                     strcpy(&pending_messages_to_server[i-1].data[pending_messages_to_server[i-1].size], client_msg);
-                     pending_messages_to_server[i-1].size += msg_size;
-                 }
-            }
-
-        }
-        if(shutdown){
+        handle_connections(fds_in, &nfds_in, fds_out, &nfds_out, pending_messages_to_server);
+        if(shutdown_server){
             break;
         }
         //handling servers connection
-        for(int i = 0; i < nfds_out; ++i) {
-            if (fds_out[i].revents == 0 || fds_out[i].fd == -1) {
-                continue;
-            }
+        handle_connections(fds_out, &nfds_out, fds_in, &nfds_in, pending_messages_to_client);
 
-            if (fds_out[i].revents != POLLIN && fds_out[i].revents != POLLOUT && fds_out[i].revents != (POLLIN | POLLOUT)) {
-                printf("Error on socket: %d. revents = %d. Closing connection.\n", fds_in[i].fd, fds_in[i].revents);
-                if (close(fds_in[i+1].fd) == -1) {
-                    strerror_r(errno, err_msg, 255);
-                    printf("close failed: %s\n", err_msg);
-                    shutdown = 1;
-                    break;
-                }
-                if (close(fds_out[i].fd) == -1) {
-                    strerror_r(errno, err_msg, 255);
-                    printf("close failed: %s\n", err_msg);
-                    shutdown = 1;
-                    break;
-                }
-                --nfds_in;
-
-                --nfds_out;
-
-                compress = 1;
-            }
-
-            ssize_t msg_size = 0;
-            if (fds_out[i].revents & POLLIN) {
-                if ((msg_size = read(fds_out[i].fd, client_msg, BUFSIZ)) == -1) {
-                    strerror_r(errno, err_msg, 255);
-                    printf("read failed: %s\n", err_msg);
-                    break;
-                }
-                if (msg_size == 0) {
-                    //what to do if server closed connection and client doesn't ready to get a data? hm???
-                    if (write_msg(&fds_out[i], &fds_in[i + 1], &pending_messages_to_client[i], client_msg, msg_size, &shutdown) == -1) {
-                        if (shutdown) {
-                            break;
-                        }
-                        compress = 1;
-                        --nfds_in;
-                        --nfds_out;
-                        continue;
-                    }
-                    printf("Connection closed.\n");
-                    if (close(fds_in[i].fd) == -1) {
-                        strerror_r(errno, err_msg, 255);
-                        printf("close failed: %s\n", err_msg);
-                        shutdown = 1;
-                        break;
-                    }
-                    if (close(fds_out[i - 1].fd) == -1) {
-                        strerror_r(errno, err_msg, 255);
-                        printf("close failed: %s\n", err_msg);
-                        shutdown = 1;
-                        break;
-                    }
-                    fds_in[i].fd = -1;
-                    --nfds_in;
-
-                    fds_out[i - 1].fd = -1;
-                    --nfds_out;
-
-                    compress = 1;
-                    continue;
-                }
-            }
-            //printf("Get msg: %s\n", client_msg);
-            if (fds_in[i + 1].revents & POLLOUT) {
-                if (write_msg(&fds_out[i], &fds_in[i + 1], &pending_messages_to_client[i], client_msg, msg_size,&shutdown) == -1) {
-                    if (shutdown) {
-                        break;
-                    }
-                    compress = 1;
-                    --nfds_in;
-                    --nfds_out;
-                }
-            } else {
-                pending_messages_to_client[i].data = (char *) realloc(pending_messages_to_client[i].data,
-                                                                          (pending_messages_to_client[i].size +
-                                                                               msg_size) * sizeof(char));
-                //using realloc may be unsafe
-                strcpy(&pending_messages_to_client[i].data[pending_messages_to_client[i].size], client_msg);
-                pending_messages_to_client[i].size += msg_size;
-            }
-        }
-        if(shutdown){
+        if(shutdown_server){
             break;
         }
-        nfds_in += new_nfds_in;
-        nfds_out += new_nfds_out;
+        if(all_fds[0].revents & POLLIN){
+            if(accept_new_connections(listen_sfd, fds_in, &nfds_in, fds_out, &nfds_out) == -1)  {
+                break;
+            }
+        }
+        else if(all_fds[0].revents != 0){
+            shutdown_server = 1;
+            break;
+        }
         if(compress){
             int offset = 0;
             for(int i = 1; i < nfds_in; ++i){
@@ -422,22 +341,22 @@ int main(int argc, char* argv[]) {
                     ++offset;
                 }
                 if(offset){
-                    fds_in[i].fd = fds_in[i + offset].fd;
-                    fds_out[i - 1] = fds_out[i + offset - 1];
-                    pending_messages_to_server[i - 1] = pending_messages_to_server[i + offset - 1];
-                    pending_messages_to_client[i - 1] = pending_messages_to_client[i + offset - 1];
+                    fds_in[i] = fds_in[i + offset];
+                    fds_out[i] = fds_out[i + offset];
+                    pending_messages_to_server[i] = pending_messages_to_server[i + offset];
+                    pending_messages_to_client[i] = pending_messages_to_client[i + offset];
                 }
             }
             compress = 0;
         }
     }
-    if(shutdown){
+    if(shutdown_server){
         for(int i = 1; i < nfds_in; ++i){
             if(close(fds_in[i].fd) == -1){
                 strerror_r(errno, err_msg, 255);
                 printf("close failed: %s\n", err_msg);
             }
-            if(close(fds_out[i-1].fd) == -1){
+            if(close(fds_out[i].fd) == -1){
                 strerror_r(errno, err_msg, 255);
                 printf("close failed: %s\n", err_msg);
             }
