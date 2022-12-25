@@ -20,7 +20,7 @@ int main() {
     }
     sleep(2);
 
-    pthread_cancel(thread);
+    pthread_cancel(thread);//приказ потоку самоубиться 
     void* res = NULL;
     int join = pthread_join(thread, &res);
     printf("join status: %d\n", join);

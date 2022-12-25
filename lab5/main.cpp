@@ -6,11 +6,12 @@ void the_last_words(void* arg){
     printf("NOOOOOOO, I'M KILLED :(");
 }
 void* child_routine(void* args){
-    pthread_cleanup_push(the_last_words, NULL);
+    pthread_cleanup_push(the_last_words, NULL);//положить в стек функции при завершении ф-ю 
     while(1) {
         printf("I AM STILL ALIVE!!!\n");
     }
-    pthread_cleanup_pop(0);
+    pthread_cleanup_pop(0);//вытащить из стека. Если аргумент != 0 то ещё и выполнить.
+    //cleanup_push и cleanup_pop - макросы, в первом есть '{' во втором '}' => всегда нужно писать вместе иначе гг.
 }
 
 int main() {
@@ -21,7 +22,5 @@ int main() {
     pthread_cancel(thread);
     void* res = NULL;
     int join = pthread_join(thread, &res);
-    //printf("join status: %d\n", join);
-    //if(res != NULL) printf("thread return: %s\n", (char *) res);
     pthread_exit(NULL);
 }

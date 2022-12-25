@@ -13,21 +13,16 @@ typedef struct arg{
     size_t len;
 }arg;
 
-
+char* strings[100];
 void* sleep_sort(void* args){
-    //pthread_cond_wait(&input_done, &condition_mutex);
-    pthread_mutex_lock(&condition_mutex);
-    pthread_mutex_unlock(&condition_mutex);
-    arg* arg_struct = (arg*)args;
-    sleep(arg_struct->len);
-    printf("%s", arg_struct->str);
-    free(arg_struct->str);
-    free(arg_struct);
+    char* str = (char*)args;
+    sleep(strlen(str));
+    printf("%s", str);
+    free(str);
     pthread_exit(NULL);
 }
 int main() {
-    pthread_mutex_init(&condition_mutex, NULL);
-    pthread_cond_init(&input_done, NULL);
+
 
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -37,7 +32,8 @@ int main() {
     char* buf = malloc(sizeof (char) * BUFSIZ);
     size_t len = 0;
     pthread_mutex_lock(&condition_mutex);
-    while(1){
+    size_t counter = 0;
+    while(counter < 100){
         fgets(buf, BUFSIZ, stdin);
         if(buf[0] == '\n'){
             break;
@@ -47,15 +43,15 @@ int main() {
         char* str = malloc(sizeof (char) * (len + 1));
         strcpy(str, buf);
 
-        arg* arg_struct = (arg*)malloc(sizeof(arg));
-        arg_struct->str = str;
-        arg_struct->len = len;
+        strings[counter] = str;
 
-        pthread_t new_thread;
-        pthread_create(&new_thread, &attr, sleep_sort, (void*) arg_struct);
+        counter++;
         //printf("thread create");
     }
-    //pthread_cond_broadcast(&input_done);
+    for(int i = 0; i < counter; ++i){
+        pthread_t new_thread;
+        pthread_create(&new_thread, &attr, sleep_sort, (void*)strings[i]);
+    }
     pthread_mutex_unlock(&condition_mutex);
     pthread_attr_destroy(&attr);
     free(buf);

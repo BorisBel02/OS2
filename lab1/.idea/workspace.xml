@@ -15,7 +15,38 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0b4eb125-1ce6-44a0-961a-27b11395f665" name="Changes" comment="" />
+    <list default="true" id="0b4eb125-1ce6-44a0-961a-27b11395f665" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab10/cmake-build-debug/.cmake/api/v1/reply/cache-v2-02cee2f55163eaa72a68.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab10/cmake-build-debug/.cmake/api/v1/reply/cmakeFiles-v1-2d8e0ad7cb93114b7d20.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab10/cmake-build-debug/.cmake/api/v1/reply/index-2022-09-19T10-04-27-0311.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab10/cmake-build-debug/.ninja_deps" beforeDir="false" afterPath="$PROJECT_DIR$/../lab10/cmake-build-debug/.ninja_deps" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab10/cmake-build-debug/.ninja_log" beforeDir="false" afterPath="$PROJECT_DIR$/../lab10/cmake-build-debug/.ninja_log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab10/cmake-build-debug/CMakeCache.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../lab10/cmake-build-debug/CMakeCache.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab10/cmake-build-debug/CMakeFiles/3.23.2/CMakeSystem.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/../lab10/cmake-build-debug/CMakeFiles/3.23.2/CMakeSystem.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab10/cmake-build-debug/CMakeFiles/CMakeOutput.log" beforeDir="false" afterPath="$PROJECT_DIR$/../lab10/cmake-build-debug/CMakeFiles/CMakeOutput.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab10/cmake-build-debug/CMakeFiles/clion-environment.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../lab10/cmake-build-debug/CMakeFiles/clion-environment.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab10/cmake-build-debug/CMakeFiles/clion-log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../lab10/cmake-build-debug/CMakeFiles/clion-log.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab10/cmake-build-debug/CMakeFiles/lab10.dir/main.c.o" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab10/cmake-build-debug/CMakeFiles/rules.ninja" beforeDir="false" afterPath="$PROJECT_DIR$/../lab10/cmake-build-debug/CMakeFiles/rules.ninja" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab10/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/../lab10/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab10/cmake-build-debug/build.ninja" beforeDir="false" afterPath="$PROJECT_DIR$/../lab10/cmake-build-debug/build.ninja" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab27/cmake-build-debug/.cmake/api/v1/reply/cache-v2-1ceb00d1394cbb4ec84c.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab27/cmake-build-debug/.cmake/api/v1/reply/cmakeFiles-v1-e867ae4b84708d3db86a.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab27/cmake-build-debug/.cmake/api/v1/reply/index-2022-09-29T12-01-07-0211.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab27/cmake-build-debug/.ninja_deps" beforeDir="false" afterPath="$PROJECT_DIR$/../lab27/cmake-build-debug/.ninja_deps" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab27/cmake-build-debug/.ninja_log" beforeDir="false" afterPath="$PROJECT_DIR$/../lab27/cmake-build-debug/.ninja_log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab27/cmake-build-debug/CMakeCache.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../lab27/cmake-build-debug/CMakeCache.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab27/cmake-build-debug/CMakeFiles/3.23.2/CMakeSystem.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/../lab27/cmake-build-debug/CMakeFiles/3.23.2/CMakeSystem.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab27/cmake-build-debug/CMakeFiles/CMakeOutput.log" beforeDir="false" afterPath="$PROJECT_DIR$/../lab27/cmake-build-debug/CMakeFiles/CMakeOutput.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab27/cmake-build-debug/CMakeFiles/clion-environment.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../lab27/cmake-build-debug/CMakeFiles/clion-environment.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab27/cmake-build-debug/CMakeFiles/clion-log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../lab27/cmake-build-debug/CMakeFiles/clion-log.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab27/cmake-build-debug/CMakeFiles/lab27.dir/main.c.o" beforeDir="false" afterPath="$PROJECT_DIR$/../lab27/cmake-build-debug/CMakeFiles/lab27.dir/main.c.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab27/cmake-build-debug/CMakeFiles/rules.ninja" beforeDir="false" afterPath="$PROJECT_DIR$/../lab27/cmake-build-debug/CMakeFiles/rules.ninja" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab27/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/../lab27/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab27/cmake-build-debug/build.ninja" beforeDir="false" afterPath="$PROJECT_DIR$/../lab27/cmake-build-debug/build.ninja" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab27/cmake-build-debug/lab27" beforeDir="false" afterPath="$PROJECT_DIR$/../lab27/cmake-build-debug/lab27" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -25,6 +56,9 @@
     <option name="formatViaClangd" value="false" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -34,6 +68,7 @@
     <option name="minorVersion" value="2.1" />
   </component>
   <component name="ProjectId" id="2ED6nEdkT57UdAeXNhmxCuYoLvO" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -63,10 +98,23 @@
       <workItem from="1662378344532" duration="558000" />
       <workItem from="1662379275250" duration="11000" />
       <workItem from="1662379302964" duration="30000" />
+      <workItem from="1665991465574" duration="46000" />
+      <workItem from="1666619833059" duration="20000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>
